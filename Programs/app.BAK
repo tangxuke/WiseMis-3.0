@@ -1,0 +1,498 @@
+*!*创建应用方案日志对象
+PROCEDURE CreateAppLogObject
+	LPARAMETERS cAppName as String
+	LOCAL oLogAppObject as AppObject
+	oLogAppObject=CreateAppObject(cAppName)
+	oLogAppObject.cBaseTable = oLogAppObject.cBaseTable + "_Log"
+ENDPROC 
+*!*创建应用方案对象
+Procedure CreateAppObject
+	Lparameters cAppName As String
+	LOCAL nStartSecond
+	nStartSecond=SECONDS()
+
+	LOCAL oAppObject As AppObject
+	*!* 加载应用方案主体
+	Local oAppObject As AppObject
+	m.oAppObject=Createobject("AppObject")
+
+	LOCAL cCursor1,cCursor2,cCursor3,cCursor4,cCursor5,cCursor6,cCursor7,cCursor8,cCursor9,cCursor10
+	cCursor1=SYS(2015)
+	cCursor2=SYS(2015)
+	cCursor3=SYS(2015)
+	cCursor4=SYS(2015)
+	cCursor5=SYS(2015)
+	cCursor6=SYS(2015)
+	cCursor7=SYS(2015)
+	cCursor8=SYS(2015)
+	cCursor9=SYS(2015)
+	cCursor10=SYS(2015)
+	LOCAL cCursorList
+	cCursorList=cCursor1+","+cCursor2+","+cCursor3+","+cCursor4+","+cCursor5+","+cCursor6+","+cCursor7+","+cCursor8+","+cCursor9+","+cCursor10
+	*!*读取配置
+	LOCAL cSQL
+	cSQL="exec WiseMis_RefreshAppInfo_RuntimeMode '"+cAppName+"'"
+
+	IF !SelectData(cSQL,cCursorList)
+		MessageBox1("读取应用方案信息失败！",0+64,"系统提示")
+		RETURN .f.
+	ENDIF
+
+	SELECT (cCursor1)
+
+	m.oAppObject.LoadFromCursor()
+
+	*!* 加载应用方案字段
+	Local oFieldObjects As Collection
+	oFieldObjects=m.oAppObject.oFieldObjects
+	SELECT (cCursor2)
+	LOCAL nFieldID
+	nFieldID=0
+
+	SCAN FOR ALLTRIM(LOWER(AppName))==ALLTRIM(LOWER(cAppName))
+		Local oFieldObject As AppFieldObject
+		oFieldObject=Createobject("AppFieldObject")
+		oFieldObject.oAppObject=m.oAppObject
+		nFieldID = nFieldID + 1
+		oFieldObject.LoadFromCursor()
+		oFieldObject.F2="V_"+oFieldObject.cFieldName+"_C"
+		IF !EMPTY(NVL(FieldType_SQL,""))
+			Local oUserRightObject As AppUserRightObject
+			oUserRightObject=Createobject("AppUserRightObject")
+			oUserRightObject.oAppObject=m.oAppObject
+			oUserRightObject.cFieldName=oFieldObject.cFieldName
+			oUserRightObject.cFieldType=ALLTRIM(FieldType_SQL)
+			oUserRightObject.nFieldLength=FieldPrec_SQL &&FieldLength_SQL
+			oUserRightObject.nFieldPrec=FieldPrec_SQL
+			oUserRightObject.nFieldScale=FieldScale_SQL
+			WITH oAppObject.oUserRightObjects as Collection
+				.Add(oUserRightObject,Lower(oUserRightObject.cFieldName))
+			ENDWITH
+			oFieldObject.oUserRightObject=oUserRightObject
+		ENDIF
+
+
+		oFieldObject.SetFieldType()
+		oFieldObjects.Add(oFieldObject,UPPER(oFieldObject.cFieldName))
+	ENDSCAN
+
+	*!*加载应用方案字段脚本
+	SELECT (cCursor3)
+	SCAN FOR ALLTRIM(LOWER(AppName))==ALLTRIM(LOWER(cAppName))
+		LOCAL oFieldObject as AppFieldObject
+		oFieldObject=m.oAppObject.GetFieldObject(Alltrim(FieldName))
+		LOCAL oFieldScriptObject as AppFieldScriptObject
+		oFieldScriptObject=CREATEOBJECT("AppFieldScriptObject")
+		oFieldScriptObject.LoadFromCursor()
+		WITH oFieldObject.oFieldScriptObjects as Collection
+			.Add(oFieldScriptObject,oFieldScriptObject.cScriptName)
+		ENDWITH
+	ENDSCAN
+
+	*!*加载排序字段
+	LOCAL cOrderExpr
+	cOrderExpr=""
+	LOCAL cOrderTempCursor
+	cOrderTempCursor=SYS(2015)
+	SELECT 0
+	SELECT FieldName,IsDesc FROM (cCursor2) WHERE ALLTRIM(LOWER(AppName))==ALLTRIM(LOWER(cAppName)) AND NVL(IsOrder,.f.) ORDER BY OrderId INTO CURSOR (cOrderTempCursor)
+	Select (cOrderTempCursor)
+	SCAN
+		cOrderExpr = cOrderExpr + IIF(EMPTY(cOrderExpr),"",",") + Alltrim(FieldName) + IIF(IsDesc," desc","")
+	ENDSCAN
+	=CloseAlias(cOrderTempCursor)
+	m.oAppObject.cOrderExpr=cOrderExpr
+
+	*!* 加载应用方案关系
+	Local oRelationObjects As Collection
+	oRelationObjects=m.oAppObject.oRelationObjects
+	SELECT (cCursor4)
+	Scan FOR ALLTRIM(LOWER(AppName))==ALLTRIM(LOWER(cAppName))
+		Local oRelationObject As AppRelationObject
+		oRelationObject=Createobject("AppRelationObject")
+		oRelationObject.oAppObject=m.oAppObject
+		oRelationObject.LoadFromCursor()
+		oRelationObjects.Add(oRelationObject,oRelationObject.cRelationId)
+	Endscan
+
+	*!* 加载应用方案操作对象
+	Local oWorkflowObjects As Collection
+	oWorkflowObjects=m.oAppObject.oWorkflowObjects
+	SELECT (cCursor5)
+	Scan FOR ALLTRIM(LOWER(AppName))==ALLTRIM(LOWER(cAppName)) AND (AllowExecute="允许" OR _screen.IsSysAdmin)
+		Local oWorkflowObject As AppWorkflowObject
+		oWorkflowObject=Createobject("AppWorkflowObject")
+		oWorkflowObject.oAppObject=m.oAppObject
+		oWorkflowObject.LoadFromCursor()
+		oWorkflowObjects.Add(oWorkflowObject,oWorkflowObject.cTaskId)
+	ENDSCAN
+
+	Local oReportObjects As Collection
+	oReportObjects=m.oAppObject.oReportObjects
+	*!* 加载报表对象（Excel报表）
+	SELECT (cCursor7)
+	Scan FOR ALLTRIM(LOWER(BaseTable))==ALLTRIM(LOWER(oAppObject.cBaseTable))
+		Local oReportObject As AppReportObject
+		oReportObject=Createobject("AppReportObject")
+		oReportObject.bIsReport=.f.
+		oReportObject.cReportName=ALLTRIM(ModalName)
+		oReportObject.cCursorList=ALLTRIM(NVL(CursorList,""))
+		oReportObject.cRemark=ALLTRIM(NVL(Remark,""))
+		oReportObject.oAppObject=m.oAppObject
+		oReportObject.cSQLText=ALLTRIM(NVL(SQLText,""))
+
+		oReportObjects.Add(oReportObject,"Excel_"+oReportObject.cReportName)
+	ENDSCAN
+	*!* 加载报表对象（VFP报表）
+	SELECT (cCursor10)
+	Scan FOR ALLTRIM(LOWER(AppName))==ALLTRIM(LOWER(cAppName))
+		Local oReportObject As AppReportObject
+		oReportObject=Createobject("AppReportObject")
+		oReportObject.bIsReport=.t.
+		oReportObject.cReportName=ALLTRIM(ReportName)
+		oReportObject.cCursorList=ALLTRIM(NVL(CursorList,""))
+		oReportObject.cRemark=ALLTRIM(NVL(Remark,""))
+		oReportObject.oAppObject=m.oAppObject
+		oReportObject.cSQLText=ALLTRIM(NVL(SQLText,""))
+		oReportObject.cFileData=ALLTRIM(NVL(FileData1,""))
+		oReportObject.cFileData2=ALLTRIM(NVL(FileData2,""))
+
+		oReportObjects.Add(oReportObject,"Report_"+oReportObject.cReportName)
+	ENDSCAN
+
+	*!*加载Excel导入对象
+	SELECT (cCursor8)
+	SCAN FOR ALLTRIM(LOWER(BaseTable))==ALLTRIM(LOWER(oAppObject.cBaseTable))
+		LOCAL oExcelImportObject as AppExcelImportObject
+		oExcelImportObject=CREATEOBJECT("AppExcelImportObject")
+		oExcelImportObject.oAppObject=m.oAppObject
+		oExcelImportObject.cModalName=ALLTRIM(ModalName)
+		oExcelImportObject.cSheetName=ALLTRIM(NVL(SheetName,"Sheet1"))
+		oExcelImportObject.nTitleLine=NVL(TitleLine,1)
+		oExcelImportObject.nDataLine=NVL(DataLine,2)
+
+		WITH m.oAppObject.oExcelImportObjects as Collection
+			.Add(oExcelImportObject,oExcelImportObject.cModalName)
+		ENDWITH
+	ENDSCAN
+
+	SELECT (cCursor9)
+	SCAN FOR ALLTRIM(LOWER(BaseTable))==ALLTRIM(LOWER(oAppObject.cBaseTable))
+		LOCAL oExcelImportFieldObject as AppExcelImportFieldObject
+		oExcelImportFieldObject=CREATEOBJECT("AppExcelImportFieldObject")
+		oExcelImportFieldObject.cSQLField=ALLTRIM(SQLField)
+		oExcelImportFieldObject.cExcelField=ALLTRIM(ExcelField)
+		oExcelImportFieldObject.bIsKey=NVL(IsKey,.f.)
+		oExcelImportFieldObject.bIsInsert=NVL(IsInsert,.f.)
+		oExcelImportFieldObject.bIsUpdate=NVL(IsUpdate,.f.)
+
+		LOCAL oExcelImportObject as AppExcelImportObject
+		WITH m.oAppObject.oExcelImportObjects as Collection
+			IF .GetKey(ALLTRIM(ModalName))>0
+				oExcelImportObject=.Item(ALLTRIM(ModalName))
+				oExcelImportObject.Add(oExcelImportFieldObject,LOWER(oExcelImportFieldObject.cSQLField))
+			ENDIF
+		ENDWITH
+	ENDSCAN
+
+	*!*加载查询配置对象
+	SELECT (cCursor6)
+	SCAN FOR ALLTRIM(LOWER(AppName))==ALLTRIM(LOWER(cAppName))
+		LOCAL oSearchSchameObject as AppSearchSchameObject
+		oSearchSchameObject=CREATEOBJECT("AppSearchSchameObject")
+		oSearchSchameObject.cSchameName=ALLTRIM(SchameName)
+		oSearchSchameObject.cSearchExpr=ALLTRIM(NVL(SearchExpr,""))
+
+		oSearchSchameObject.oAppObject=m.oAppObject
+		WITH m.oAppObject.oSearchSchameObjects as Collection
+			.Add(oSearchSchameObject,oSearchSchameObject.cSchameName)
+		ENDWITH
+	ENDSCAN
+
+
+	*!* 返回应用方案对象
+	m.oAppObject.DoInit()
+	*MESSAGEBOX("创建对象花费时间为："+TRANSFORM(SECONDS()-nStartSecond)+"秒。")
+
+	=CloseAlias(cCursorList)
+
+	Return m.oAppObject
+ENDPROC
+
+*!*启动应用方案，不注册窗体
+PROCEDURE DoWiseMisApplication2
+	Lparameters oAppObject As AppObject,oParams As Collection
+	RETURN DoWiseMisApplication(oAppObject,oParams,"","","",.t.)
+ENDPROC
+
+*!*启动应用方案
+Procedure DoWiseMisApplication
+	Lparameters oAppObject As AppObject,oParams As Collection,cAppClass,cAppClassLibrary,cInApplication,bNoRegisterForm as Boolean
+	If Vartype(oAppObject)<>"O"
+		MessageBox1("应用方案对象不存在！",0+64,"系统提示")
+		Return null
+	ENDIF
+	If Vartype(cAppClass)<>"C" Or Empty(cAppClass)
+		LOCAL cUIStyle
+		WITH _screen.oSettingObject as WisemisSettingObject
+			cUIStyle=.GetValue("UIStyle")
+		ENDWITH
+		IF !INLIST(cUIStyle,"new","old")
+			cUIStyle="new"
+		ENDIF
+		IF cUIStyle=="new"
+			cAppClass=_Screen.cWiseMisAppClass
+		ELSE
+			cAppClass=_Screen.cWiseMisAppClass2
+		ENDIF
+	Endif
+	If Vartype(cAppClassLibrary)<>"C" Or Empty(cAppClassLibrary)
+		LOCAL cUIStyle
+		WITH _screen.oSettingObject as WisemisSettingObject
+			cUIStyle=.GetValue("UIStyle")
+		ENDWITH
+		IF !INLIST(cUIStyle,"new","old")
+			cUIStyle="new"
+		ENDIF
+		IF cUIStyle=="new"
+			cAppClassLibrary=_Screen.cWiseMisAppClassLibrary
+		ELSE
+			cAppClassLibrary=_Screen.cWiseMisAppClassLibrary2
+		ENDIF
+	Endif
+	If Vartype(cInApplication)<>"C" Or Empty(cInApplication)
+		cInApplication=_Screen.cWiseMisAppClassInApplication
+	ENDIF
+
+	LOCAL nStartSecond
+	nStartSecond=SECONDS()
+
+	Local cAppObjectName,oForm As Form
+	cAppObjectName=Sys(2015)
+	Public &cAppObjectName
+	Store Newobject(cAppClass,cAppClassLibrary,cInApplication,oAppObject,oParams,bNoRegisterForm) To (cAppObjectName)
+	If Type(cAppObjectName)="O"
+		With &cAppObjectName As AppForm
+			.Show()
+		ENDWITH
+		*!*			IF !_screen.bIsWiseMisAdministrator
+		*!*				*!*点击记录
+		*!*				LOCAL cPreAlias
+		*!*				cPreAlias=ALIAS()
+		*!*				SELECT (_screen.cAlias_UserClick_App)
+		*!*				LOCATE FOR ALLTRIM(LOWER(AppName))==ALLTRIM(LOWER(oAppObject.cAppName))
+		*!*				IF FOUND()
+		*!*					REPLACE Changed WITH .t.,LastClickTime WITH DATETIME()
+		*!*				ELSE
+		*!*					APPEND BLANK
+		*!*					REPLACE Changed WITH .t.,AppName WITH oAppObject.cAppName,LastClickTime WITH DATETIME()
+		*!*				ENDIF
+		*!*				IF SELECT(cPreAlias)>0
+		*!*					SELECT (cPreAlias)
+		*!*				ENDIF
+		*!*			ENDIF
+
+		*MESSAGEBOX("启动表单花费："+TRANSFORM(SECONDS()-nStartSecond)+"秒。")
+
+		Return &cAppObjectName
+	Else
+		MessageBox1("启动应用方案失败！",0+64,"系统提示")
+		Return null
+	ENDIF
+
+ENDPROC
+
+*!*生成默认Excel报表模版
+PROCEDURE CreateAppExcelModal
+	LPARAMETERS oAppObject as AppObject
+	LOCAL cReportName
+	cReportName=InputBox1("请输入要生成的报表模板名称：","生成报表模板","默认报表")
+	IF EMPTY(cReportName)
+		RETURN
+	ENDIF
+	LOCAL cCheckSQL
+	TEXT TO cCheckSQL NOSHOW TEXTMERGE 
+IF exists(select * from WiseMis_ExcelModal where ModalName='<<cReportName>>')
+	SELECT 1
+ELSE
+	SELECT 0
+	ENDTEXT 
+	IF GetValue(cCheckSQL)=1
+		MessageBox1("报表已存在，请重新命名重试！",0+64,"系统提示")
+		RETURN
+	ENDIF
+	LOCAL oExcel as Excel.Application
+	oExcel=CREATEOBJECT("Excel.Application")
+	LOCAL oWorkbook as Excel.Workbook
+	oWorkbook=oExcel.Workbooks.Add()
+	LOCAL oWorksheet as Excel.Worksheet
+	IF oWorkbook.Worksheets.Count=0
+		oWorksheet=oWorkbook.Worksheets.Add()
+	ELSE
+		oWorksheet=oWorkbook.Worksheets(1)
+	ENDIF
+	************************************************************************************************
+	*!*第一步：编写标题，位置：
+	LOCAL cAppCaption
+	cAppCaption=oAppObject.cAppCaption
+	oWorksheet.Range("G2").Value=cAppCaption
+	oWorksheet.Range("G2").Font.Bold=.t.
+
+	LOCAL cSQL,cCursorNames,cKeysExpr
+	STORE "" TO cSQL,cCursorNames,cKeysExpr
+	*!*第二步：判断是否主从模式
+	IF oAppObject.bMainDetailMode
+		cKeysExpr=""
+		FOR EACH oFieldObject as AppFieldObject IN oAppObject.oKeyfieldObjects
+			cKeysExpr = cKeysExpr + IIF(EMPTY(cKeysExpr),""," and ") + "[" + oFieldObject.cFieldName + "]=?" +  oFieldObject.cFieldName
+		ENDFOR
+		cSQL="select "+oAppObject.cselectfields+CHR(13)+CHR(10)+" from ["+oAppObject.cBaseTable+"]"+CHR(13)+CHR(10)+"where "+cKeysExpr
+		cCursorNames="A1"
+		LOCAL nColumn,nRow
+		*输出页头
+		nColumn=2
+		nRow=4
+		FOR EACH oFieldObject as AppFieldObject IN oAppObject.oFieldObjects
+			IF oFieldObject.cFieldName="__record__guid__" OR oFieldObject.bIsMemoField
+				LOOP
+			ENDIF
+			oWorksheet.Cells(nRow,nColumn).Value=oFieldObject.cFieldCaption
+			nColumn = nColumn + 1
+			oWorksheet.Cells(nRow,nColumn).Value="{A1."+oFieldObject.cFieldName+"}"
+			nColumn = nColumn + 1
+			IF nColumn>=10
+				nRow = nRow + 1
+				nColumn=2
+			ENDIF
+		ENDFOR
+		*输出明细
+		LOCAL nCurCount
+		nCurCount=1
+		FOR EACH oRelationObject as AppRelationObject IN oAppObject.orelationobjects
+			LOCAL oRelationAppObject as AppObject
+			oRelationAppObject=CreateAppObject(oRelationObject.cChildAppName)
+			IF VARTYPE(oRelationAppObject)<>"O"
+				LOOP
+			ENDIF
+			nCurCount = nCurCount + 1
+			nRow = nRow + 1
+			oWorksheet.Cells(nRow,2).Value=oRelationObject.cCaption
+			nRow = nRow + 1
+			nColumn=2
+			*输出明细表头
+			FOR EACH oFieldObject as AppFieldObject IN oRelationAppObject.oFieldObjects
+				IF oFieldObject.cFieldName="__record__guid__" OR oFieldObject.bIsMemoField
+					LOOP
+				ENDIF
+				oWorksheet.Cells(nRow,nColumn).Value=oFieldObject.cFieldCaption
+				oWorksheet.Cells(nRow,nColumn).Font.Bold=.t.
+				oWorksheet.Cells(nRow,nColumn).Borders(7).LineStyle=1
+				oWorksheet.Cells(nRow,nColumn).Borders(8).LineStyle=1
+				oWorksheet.Cells(nRow,nColumn).Borders(9).LineStyle=1
+				oWorksheet.Cells(nRow,nColumn).Borders(10).LineStyle=1
+				nColumn = nColumn + 1
+			ENDFOR
+			nRow = nRow + 1
+			LOCAL cChildCursor,cChildSQL,cChildKeys
+			cChildKeys=""
+			FOR i=1 TO GETWORDCOUNT(oRelationObject.cChildFields,",")
+				LOCAL oChildFieldObject as AppFieldObject
+				oChildFieldObject=oRelationAppObject.GetFieldObject(GETWORDNUM(oRelationObject.cChildFields,i,","))
+				IF VARTYPE(oChildFieldObject.oUserRightObject)<>"O"
+					LOOP
+				ENDIF
+				cChildKeys = cChildKeys + IIF(EMPTY(cChildKeys),""," and ") + "[" + GETWORDNUM(oRelationObject.cChildFields,i,",") + "]=?" + GETWORDNUM(oRelationObject.cMainFields,i,",")
+			ENDFOR
+			cChildCursor="A"+TRANSFORM(nCurCount)
+			cChildSQL="select "+oRelationAppObject.cselectfields+CHR(13)+CHR(10)+"from ["+oRelationAppObject.cBaseTable+"]"+CHR(13)+CHR(10)+"where "+cChildKeys+CHR(13)+CHR(10)+IIF(EMPTY(oRelationAppObject.cOrderExpr),""," order by "+oRelationAppObject.cOrderExpr)
+			cCursorNames = cCursorNames + "," + cChildCursor
+			cSQL = cSQL + REPLICATE(CHR(13)+CHR(10),2) + cChildSQL
+			oWorksheet.Cells(nRow,1).Value="{表体开始}"
+			oWorksheet.Cells(nRow,2).Value=cChildCursor
+			nRow = nRow + 1
+			nColumn=2
+			FOR EACH oFieldObject as AppFieldObject IN oRelationAppObject.oFieldObjects
+				IF oFieldObject.cFieldName="__record__guid__" OR oFieldObject.bIsMemoField
+					LOOP
+				ENDIF
+				oWorksheet.Cells(nRow,nColumn).Value="{"+oFieldObject.cFieldName+"}"
+				oWorksheet.Cells(nRow,nColumn).Borders(7).LineStyle=1
+				oWorksheet.Cells(nRow,nColumn).Borders(8).LineStyle=1
+				oWorksheet.Cells(nRow,nColumn).Borders(9).LineStyle=1
+				oWorksheet.Cells(nRow,nColumn).Borders(10).LineStyle=1
+				nColumn = nColumn + 1
+			ENDFOR
+			nRow = nRow + 1
+			oWorksheet.Cells(nRow,1).Value="{表体结束}"
+		ENDFOR
+		*输出页尾
+		nRow = nRow + 1
+		nRow = nRow + 1
+		oWorksheet.Cells(nRow,1).Value="{结束}"
+	ELSE
+		LOCAL nColumn
+		nColumn=2
+		*输出页头
+		FOR EACH oFieldObject as AppFieldObject IN oAppObject.oFieldObjects
+			IF oFieldObject.cFieldName="__record__guid__" OR oFieldObject.bIsMemoField
+				LOOP
+			ENDIF
+			oWorksheet.Cells(4,nColumn).Value=oFieldObject.cFieldCaption
+			oWorksheet.Cells(4,nColumn).Font.Bold=.t.
+			oWorksheet.Cells(4,nColumn).Borders(7).LineStyle=1
+			oWorksheet.Cells(4,nColumn).Borders(8).LineStyle=1
+			oWorksheet.Cells(4,nColumn).Borders(9).LineStyle=1
+			oWorksheet.Cells(4,nColumn).Borders(10).LineStyle=1
+			nColumn = nColumn + 1
+		ENDFOR
+		*输出明细
+		oWorksheet.Cells(5,1).Value="{表体开始}"
+		nColumn=2
+		FOR EACH oFieldObject as AppFieldObject IN oAppObject.oFieldObjects
+			IF oFieldObject.cFieldName="__record__guid__" OR oFieldObject.bIsMemoField
+				LOOP
+			ENDIF
+			oWorksheet.Cells(6,nColumn).Value="{"+oFieldObject.cFieldName+"}"
+			oWorksheet.Cells(6,nColumn).Borders(7).LineStyle=1
+			oWorksheet.Cells(6,nColumn).Borders(8).LineStyle=1
+			oWorksheet.Cells(6,nColumn).Borders(9).LineStyle=1
+			oWorksheet.Cells(6,nColumn).Borders(10).LineStyle=1
+			nColumn = nColumn + 1
+		ENDFOR
+		oWorksheet.Cells(7,1).Value="{表体结束}"
+		*输出页尾
+		oWorksheet.Cells(9,1).Value="{结束}"
+	ENDIF
+	************************************************************************************************
+	LOCAL cSaveFileName
+	cSaveFileName=ADDBS(_screen.cFilesPath)+SYS(2015)+".xls"
+	IF EMPTY(cSaveFileName)
+		oWorkbook.Close(.f.)
+		oExcel.Quit
+		RETURN
+	ENDIF
+	oWorkbook.SaveAs(cSaveFileName)
+	oWorkbook.Close()
+	LOCAL cFileStream
+	cFileStream=oAppObject.cAppCaption+cReportName+"模版:xls&ext;"+FILETOSTR(cSaveFileName)
+	cFileStream=STRCONV(cFileStream,15)
+	oExcel.Quit
+	LOCAL cSaveCmd
+	TEXT TO cSaveCmd NOSHOW TEXTMERGE
+	INSERT INTO WiseMis_ExcelModal(OrderId,ModalName,BaseTable,SQLText,CursorList,ExcelData,Remark)
+		values (10,'<<cReportName>>','<<oAppObject.cBaseTable>>','<<STRTRAN(cSQL,"'","''")>>','<<cCursorNames>>',0x<<cFileStream>>,'')
+	ENDTEXT
+	IF !Execute(cSaveCmd)
+		MessageBox1("保存模版失败！",0+64,"系统提示")
+		RETURN
+	ENDIF
+	ERASE (cSaveFileName)
+	MessageBox1("模版保存成功，请编辑模版内容！",0+64,"系统提示")
+	LOCAL oParamsCollection as Collection
+	oParamsCollection=CREATEOBJECT("Collection")
+	oParamsCollection.Add(oAppObject.cAppName,"AppName")
+	oParamsCollection.Add(cReportName,"ModalName")
+	LOCAL oTestAppObject as AppObject
+	oTestAppObject=CreateAppObject("Excel模版")
+	=DoWiseMisApplication(oTestAppObject,oParamsCollection)
+ENDPROC

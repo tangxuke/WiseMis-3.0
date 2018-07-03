@@ -1,0 +1,69 @@
+*!*	*!*当系统空闲时要执行的动作
+*!*	PROCEDURE OnSystemIdle
+*!*		*!*刷新提醒对象
+*!*		=RefreshUserNotifys()
+*!*	ENDPROC
+
+*!*自动备份数据库
+PROCEDURE AutoBackupDatabase
+	IF !INLIST(ALLTRIM(LOWER(_screen.cServer)),"(local)","localhost","127.0.0.1",ALLTRIM(LOWER(APIGetComputerName())))
+		RETURN 
+	ENDIF 
+	LOCAL cBackupPath
+	cBackupPath=ALLTRIM(NVL(GetValue("select [value] from WiseMis_Setting where [key]='WiseMis_BackupDir'"),""))
+	IF EMPTY(cBackupPath)
+		RETURN
+	ENDIF
+	IF !DIRECTORY(cBackupPath,1)
+		RETURN 
+	ENDIF 
+	=SetStatusText("正在进行自动备份，请稍侯...")
+	Local oLoginObject As WiseMisLoginObject
+	With _Screen.oLoginObjects As WiseMisLoginObjects
+		oLoginObject=.Item(.cLastLoginSystem)
+	Endwith
+	Local cDbBakPath
+	cDbBakPath=Addbs(cBackupPath)+oLoginObject.cDatabase
+	IF !DIRECTORY(cDbBakPath)
+		IF !APICreateDirectory(cDbBakPath)
+			=SetStatusText("")
+			RETURN
+		ENDIF 
+	ENDIF 
+	Local cBakFile
+	cBakFile=ADDBS(cDbBakPath)+oLoginObject.cDatabase+"_db_"+Dtos(Date())+".bak"
+	*!*如果今天已经备份过，则返回
+	IF FILE(cBakFile,1)
+		=SetStatusText("")
+		RETURN
+	ENDIF
+	Local cBackupSQL
+	TEXT TO cBackupSQL NOSHOW TEXTMERGE
+BACKUP DATABASE <<oLoginObject.cDatabase>> TO DISK='<<cBakFile>>'
+	ENDTEXT
+	IF !Execute(cBackupSQL)
+		=SetStatusText("")
+		RETURN
+	ENDIF
+	*!*登记备份文件
+	oLoginObject.cLastBackupFile=cBakFile
+	*!*保存登录文件
+	WITH _screen.oLoginObjects as WiseMisLoginObjects
+		.Save(_screen.cLoginXMLFile)
+	ENDWITH
+	*!*自动删除一周前备份
+	LOCAL cDefaultPath
+	cDefaultPath=SET("Default")
+	LOCAL cDeleteBakFile
+	cDeleteBakFile=ADDBS(cDbBakPath)+oLoginObject.cDatabase+"_db_"+DTOS(DATE()-6)
+	SET DEFAULT TO (cDbBakPath)
+	STORE ADIR(arrDir,"*.bak") TO nFiles
+	FOR i=1 TO nFiles
+		LOCAL cTempBakFile
+		cTempBakFile=arrDir[i,1]
+		IF UPPER(cTempBakFile)<UPPER(cDeleteBakFile)
+			ERASE (cTempBakFile)
+		ENDIF 
+	ENDFOR 
+	SET DEFAULT TO (cDefaultPath)
+ENDPROC

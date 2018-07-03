@@ -1,0 +1,13 @@
+Visual Class Library x:\源代码\公共平台\wisemis3.0\addons\keyboard.vcx has the following errors:
+    Unknown GETVALUE - Undefined
+    Unknown DECOMPRESSSTRING - Undefined
+    Unknown ENCRYPT - Undefined
+    Unknown GETGUID - Undefined
+    Unknown EXECUTE - Undefined
+    Unknown FINDPORT_2 - Undefined
+    Unknown YREADSTRING - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown SELECTDATA - Undefined
+    Unknown MD5FILE - Undefined
+    Unknown YWRITESTRING - Undefined
+

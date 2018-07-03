@@ -1,0 +1,13 @@
+Visual Class Library e:\yunpan\源代码\公共平台\wisemis3.0\classlibs\wisemisforms.vcx has the following errors:
+    Unknown __APPFORM__EXIT__ - Undefined
+    Unknown __APPFORM__START__ - Undefined
+
+Visual Class Library e:\yunpan\源代码\公共平台\wisemis3.0\classlibs\wisemisobject.vcx has the following errors:
+    Unknown __SCRIPT__TRANSLATE__ - Undefined
+    Unknown __APPOBJECT__EXIT__ - Undefined
+    Unknown __APPOBJECT__START__ - Undefined
+
+Form e:\yunpan\源代码\公共平台\wisemis3.0\forms\frm_main.scx has the following errors:
+    Unknown __SYSTEM__EXIT__ - Undefined
+    Unknown __SYSTEM__START__ - Undefined
+

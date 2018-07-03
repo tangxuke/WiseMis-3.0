@@ -1,0 +1,76 @@
+Form e:\...\快盘\源代码\公共平台\wisemis3.0\addons\多维教育\frm_readcard.scx has the following errors:
+    Unknown REGREAD - Undefined
+    Unknown REGWRITE - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\多维教育\报名缴费.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown GETNEWID - Undefined
+    Unknown EXECUTE - Undefined
+    Unknown INPUTBOX1 - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\多维教育\考勤.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown EXECUTE - Undefined
+    Unknown PARSEPATH - Undefined
+    Unknown RUNFILE - Undefined
+    Unknown SAVEFILETODB - Undefined
+    Unknown GETFILEFROMDB - Undefined
+    Unknown SHELLEXECUTE - Undefined
+    Unknown DELETEFILEFROMDB - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\多维教育\考勤总览.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown TOPY - Undefined
+
+Visual Class Library e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\_base.vcx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown EXECUTE - Undefined
+    Unknown RUNFILE - Undefined
+    Unknown SHELLEXECUTE - Undefined
+    Unknown SETSTATUSTEXT - Undefined
+    Unknown CREATEAPPOBJECT - Undefined
+    Unknown DOWISEMISAPPLICATION - Undefined
+    Unknown MD5STRING - Undefined
+    Unknown TOTIMESTRING - Undefined
+    Unknown IMAGETOFILE - Undefined
+
+Program e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\myheader.prg has the following errors:
+    Unknown SETSTATUSTEXT - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\forms\frm_f7.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown MESSAGEBOX1 - Undefined
+    Unknown TRANSFORMOBJECTS - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\frm_browse.scx has the following errors:
+    Unknown SETSTATUSTEXT - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\多维教育\选择科目.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\多维教育\合并学号.scx has the following errors:
+    Unknown EXECUTE - Undefined
+    Unknown INPUTBOX1 - Undefined
+
+Report d:\wisemis3\收据(育龙学校).frx has the following errors:
+    Unknown NTOC - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\forms\frm_browse2.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown RUNFILE - Undefined
+    Unknown MESSAGEBOX1 - Undefined
+    Unknown TRANSFORMOBJECTS - Undefined
+    Unknown TOENGLISH - Undefined
+    Unknown VALIDREGISTER - Undefined
+
+Form e:\云盘同步文件夹\快盘\源代码\公共平台\wisemis3.0\addons\多维教育\课时核销.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown EXECUTE - Undefined
+

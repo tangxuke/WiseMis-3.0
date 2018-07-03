@@ -1,0 +1,8 @@
+*!*Ìæ»»Inputbox
+PROCEDURE InputBox1
+	LPARAMETERS  cDialogCaption ,cInputPrompt,cDefaultValue , nTimeout ,cTimeoutValue,cCancelValue
+	LOCAL cInputValue
+	cInputValue=INPUTBOX(cInputPrompt,cDialogCaption,cDefaultValue,nTimeout,cTimeoutValue,cCancelValue)
+	*DO FORM frm_tool_inputbox WITH cInputPrompt , cDialogCaption , cDefaultValue TO cInputValue
+	RETURN cInputValue
+ENDPROC 

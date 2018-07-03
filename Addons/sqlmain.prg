@@ -1,0 +1,8 @@
+DEFINE CLASS SQLClass as Custom OLEPUBLIC 
+	FUNCTION SayHello1 as String
+		RETURN "Hello World!"
+	ENDFUNC 
+	
+	PROCEDURE Init
+	ENDPROC  
+ENDDEFINE 

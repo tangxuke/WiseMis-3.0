@@ -1,0 +1,37 @@
+Form x:\源代码\公共平台\wisemis3.0\addons\多维点餐系统\点餐.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown EXECUTE - Undefined
+    Unknown INPUTBOX1 - Undefined
+
+Form x:\源代码\公共平台\wisemis3.0\forms\frm_f7.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+
+Visual Class Library x:\源代码\公共平台\wisemis3.0\classlibs\_base.vcx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown EXECUTE - Undefined
+    Unknown INPUTBOX1 - Undefined
+    Unknown SETSTATUSTEXT - Undefined
+    Unknown SHELLEXECUTE - Undefined
+    Unknown CREATEAPPOBJECT - Undefined
+    Unknown DOWISEMISAPPLICATION - Undefined
+    Unknown MD5STRING - Undefined
+    Unknown TOTIMESTRING - Undefined
+    Unknown IMAGETOFILE - Undefined
+    Unknown RUNFILE - Undefined
+    Unknown UNREGISTERFORM - Undefined
+    Unknown REGISTERFORM - Undefined
+
+Program x:\源代码\公共平台\wisemis3.0\classlibs\myheader.prg has the following errors:
+    Unknown SETSTATUSTEXT - Undefined
+
+Form x:\源代码\公共平台\wisemis3.0\forms\frm_browse.scx has the following errors:
+    Unknown SETSTATUSTEXT - Undefined
+    Unknown VALIDREGISTER - Undefined
+
+Form x:\源代码\公共平台\wisemis3.0\forms\frm_tool_export.scx has the following errors:
+    Unknown INPUTBOX1 - Undefined
+    Unknown VALIDREGISTER - Undefined
+

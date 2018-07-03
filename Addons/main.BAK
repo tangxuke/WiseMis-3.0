@@ -1,0 +1,10 @@
+LPARAMETERS cFormName as String
+IF VARTYPE(cFormName)<>"C"
+	cFormName=""
+ENDIF 
+IF EMPTY(cFormName)
+	RETURN .f.
+ENDIF 
+SET PROCEDURE TO CommonClass,SQL ADDITIVE 
+SET CLASSLIB TO Addons ADDITIVE 
+DO FORM (cFormName)

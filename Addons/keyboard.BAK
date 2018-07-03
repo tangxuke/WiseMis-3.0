@@ -1,0 +1,40 @@
+DEFINE CLASS KeyboardClass as Session
+PROCEDURE DoCmd
+LPARAMETERS cCPBH as String,cMethod as String
+IF VARTYPE(cCPBH)<>"C" OR EMPTY(cCPBH)
+	MESSAGEBOX("请输入产品编码！",0+64,"系统提示")
+	RETURN .f.
+ENDIF
+IF VARTYPE(cMethod)<>"C"
+	cMethod=""
+ENDIF
+IF !INLIST(cMethod,"生成回路","优化宽度")
+	MESSAGEBOX("命令不正确！",0+64,"系统提示")
+	RETURN .f.
+ENDIF
+
+*!*检测产品
+LOCAL cPCode
+cPCode=NVL(GetValue("select [value] from WiseMis_Setting where [key]='WiseMis_SystemCode'"),"")
+IF ALLTRIM(UPPER(cPCode))<>"7B6814AA-13DA-4CEE-8B54-D54BC58FCEDE"
+	MESSAGEBOX(STRCONV("C8EDBCFEB0E6B1BEB2BBD5FDC8B7A3ACC7EBD6D8D0C2B0B2D7B0A3A1",16),0+64,STRCONV("CFB5CDB3CCE1CABE",16))
+	RETURN
+ENDIF
+*!*检测验证码是否过期
+LOCAL nRegisterResult,dExpireDate
+dExpireDate={}
+nRegisterResult=ValidRegister("",@dExpireDate)
+IF !BITTEST(nRegisterResult,0)
+	MESSAGEBOX(STRCONV("CFB5CDB3CEB4C8A1B5C3CAB9D3C3CADAC8A8A3A1C7EBC1AACFB5B9D9B7BDD6A7B3D6C8CBD4B1A3A1",16),0+64,",STRCONV("CFB5CDB3CCE1CABE",16))
+	RETURN
+ENDIF
+*!*解出源代码
+LOCAL cSourceCode
+cSourceCode=GetValue("select 代码 from 代码表 where 名称='"+cMethod+"'")
+*!*代码解密
+*!*代码解析
+cSourceCode=STRTRAN(cSourceCode,"{产品编号}",cCPBH,-1,-1,1)
+*!*执行代码
+RETURN Execute(cSourceCode)
+ENDPROC 
+ENDDEFINE 

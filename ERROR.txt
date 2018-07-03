@@ -1,0 +1,32 @@
+客户端信息：
+版本号：3.4.131
+机器码：1A143B50-D228E216
+识别码：489E0958-2704-491A-A0E6-FB8273904C4B
+
+------------------------------------------------------
+客户端/时间：TANGXUKE # Administrator/10:05:15
+错误号：1098
+错误信息：数据库错误
+
+[Microsoft][ODBC SQL Server Driver][SQL Server]text、ntext 或 image 节点的页 (1:1433168)，槽 2 不存在。
+源代码：SELECT _4UQ0LM8B0
+
+程序名：WISEMIS
+错误行：30
+------------------------------------------------------
+最近执行的SQL语句：
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+	IF exists(select * from sysobjects where id=object_id('WiseMis_UserOnline') AND ObjectProperty(id,'IsUserTable')=1)
+	BEGIN
+		DELETE FROM WiseMis_UserOnline where spid=@@spid
+		INSERT INTO WiseMis_UserOnline(spid,UserName) VALUES (@@spid,'sa')
+	END
+exec WiseMis_RefreshSystemInfo
+	IF exists(select * from sysobjects where id=object_id('WiseMis_UserOnline') AND ObjectProperty(id,'IsUserTable')=1)
+	BEGIN
+		DELETE FROM WiseMis_UserOnline where spid=@@spid
+	END
+
+
+
+最近执行的脚本代码：

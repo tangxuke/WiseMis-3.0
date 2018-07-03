@@ -1,0 +1,31 @@
+LPARAMETERS cUpdateServer
+LOCAL cUpdateServer1,cUpdateServer2
+cUpdateServer1="121.12.164.74,6688"
+cUpdateServer2="121.12.164.74,6688"
+
+IF HttpDownFile("http://www.wisemis.cn/wisemis/update.txt",ADDBS(_screen.cRootPath)+"update.txt")
+	LOCAL cUpdateCode
+	cUpdateCode=FILETOSTR(ADDBS(_screen.cRootPath)+"update.txt")
+	cUpdateServer1=GETWORDNUM(cUpdateCode,1,"|")
+	cUpdateServer2=GETWORDNUM(cUpdateCode,2,"|")
+ENDIF
+
+*!*检测是否能连接到官方服务器
+LOCAL nHandle,bCheckOnline
+nHandle=SQLSTRINGCONNECT("Driver={SQL Server};Server="+cUpdateServer1+";Database="+_screen.cUpdateDatabase+";Uid="+_screen.cUpdateUserName+";Pwd="+_screen.cUpdatePassword)
+IF nHandle<1
+	nHandle=SQLSTRINGCONNECT("Driver={SQL Server};Server="+cUpdateServer2+";Database="+_screen.cUpdateDatabase+";Uid="+_screen.cUpdateUserName+";Pwd="+_screen.cUpdatePassword)
+	IF nHandle<1
+		bCheckOnline=.f.
+	ELSE 
+		bCheckOnline=.t.
+		=SQLDISCONNECT(nHandle)
+		cUpdateServer=cUpdateServer2
+	ENDIF 
+ELSE 
+	bCheckOnline=.t.
+	=SQLDISCONNECT(nHandle)
+	cUpdateServer=cUpdateServer1
+ENDIF 
+
+RETURN bCheckOnline

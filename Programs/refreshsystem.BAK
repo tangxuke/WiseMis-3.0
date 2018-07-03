@@ -1,0 +1,324 @@
+PROCEDURE RefreshSystem
+LOCAL cSQL
+TEXT TO cSQL NOSHOW TEXTMERGE 
+IF NOT exists(select * from syscolumns where id=object_id('WiseMis_AppType') AND name='isQuery')
+	EXEC('alter table WiseMis_AppType add isQuery bit null')
+	
+IF NOT exists(select * from syscolumns where id=object_id('WiseMis_AppType') AND name='isMenu')
+	EXEC('alter table WiseMis_AppType add isMenu bit null')
+	
+GO
+
+declare @TestUser varchar(50),@TestDate datetime
+set @TestUser=dbo.WiseMis_UserName()
+set @TestDate=getdate()
+
+declare @LoginMode varchar(50)
+set @LoginMode=(select [value] from WiseMis_Setting where [key]='WiseMis_LoginMode')
+
+declare @IsAdmin bit
+set @IsAdmin=dbo.WiseMis_IsMember('sysadmin',@TestUser,@TestDate)
+
+
+
+--AppType
+select name,parent_name,isnull(title,name) as Title,IconImageGuid,null as IconImage
+,cast((case when exists(select * from WiseMis_AppType b where parent_name=a.name and Visible=1) then 1 else 0 end) as bit) as HasChild
+,isQuery,isMenu
+from WiseMis_AppType a
+where Visible=1
+	and (@LoginMode='SQL' 
+		or (
+		--是否系统管理员
+		@IsAdmin=1
+		or
+		--存在应用方案权限
+		exists(select * from WiseMis_AppIndex b 
+				where (a.name=b.AppType or a.parent_name=b.AppType) 
+					and not exists(select * from WiseMis_AppIndexUserRights 
+									where AllowRun='禁止' 
+										and AppName=b.AppName 
+										and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+								)
+					and exists(select * from WiseMis_AppIndexUserRights 
+									where AllowRun='允许' 
+										and AppName=b.AppName 
+										and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+								))
+		--存在菜单权限
+		or exists(select * from WiseMis_Menu b 
+				where (a.name=b.AppType or a.parent_name=b.AppType) 
+					and not exists(select * from WiseMis_MenuUserRights 
+									where AllowRun='禁止' 
+										and MenuId=b.id 
+										and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+								)
+					and exists(select * from WiseMis_MenuUserRights 
+									where AllowRun='允许' 
+										and MenuId=b.id 
+										and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+								))
+		--存在查询方案权限
+		or exists(select * from WiseMis_Query b 
+				where (a.name=b.AppType or a.parent_name=b.AppType) 
+					and not exists(select * from WiseMis_QueryUserRights 
+									where AllowSelect='禁止' 
+										and SelectName=b.select_name 
+										and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+								)
+					and exists(select * from WiseMis_QueryUserRights 
+									where AllowSelect='允许' 
+										and SelectName=b.select_name 
+										and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+								))
+		)
+	)
+		
+
+order by orderid,name
+
+--AppIndex
+select a.AppName, Caption, BaseTable, a.AllowNew, a.AllowEdit, a.AllowDelete, a.AllowRun, AppType, Pages, AppOrder, ScriptText, ExtraSearchExp, AllowSaveChange, NotShowInBar, RefreshOnEntry, NewFilter, EditFilter, DeleteFilter, PassiveRefresh, MainDetailMode, a.IconImageGuid, AuditEnabled, AttachmentEnabled
+,cast(ObjectProperty(object_id(BaseTable),'IsUserTable') as bit) as IsUserTable
+,dbo.WiseMis_GetNotifyExpr(a.AppName,@TestUser) as NotifyExpr
+,IsNotify,ShowTree,AppTreeField,TreeTable,TreeNodeField,TreeParentField,TreeNodeText,TreeFilterExpr,TreeOrderExpr,IsRelease
+,IsLog
+,isnull(c.favorite,0) as IsFavorite
+,(case when @LoginMode='SQL' then '允许' 
+	when @IsAdmin=1 then '允许'
+	else (case when exists(select * from WiseMis_AppIndexUserRights 
+				where AllowRun='禁止' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_AppIndexUserRights 
+				where AllowRun='允许' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as UserAllowRun
+,(case when @LoginMode='SQL' then  (case when PERMISSIONS(object_id(BaseTable))&0x1000>0 then '允许' else '禁止' end) 
+		when @IsAdmin=1 then '允许'
+		else (case when exists(select * from WiseMis_AppIndexUserRights 
+				where AllowSelect='禁止' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_AppIndexUserRights 
+				where AllowSelect='允许' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as UserAllowSelect
+,(case when @LoginMode='SQL' then  (case when PERMISSIONS(object_id(BaseTable))&0x8>0 then '允许' else '禁止' end) 
+		when @IsAdmin=1 then '允许'
+		else (case when exists(select * from WiseMis_AppIndexUserRights 
+				where AllowInsert='禁止' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_AppIndexUserRights 
+				where AllowInsert='允许' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as UserAllowInsert
+,(case when @LoginMode='SQL' then  (case when PERMISSIONS(object_id(BaseTable))&0x2000>0 then '允许' else '禁止' end) 
+		when @IsAdmin=1 then '允许'
+		else (case when exists(select * from WiseMis_AppIndexUserRights 
+				where AllowUpdate='禁止' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_AppIndexUserRights 
+				where AllowUpdate='允许' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as UserAllowUpdate
+,(case when @LoginMode='SQL' then  (case when PERMISSIONS(object_id(BaseTable))&0x10>0 then '允许' else '禁止' end) 
+		when @IsAdmin=1 then '允许'
+		else (case when exists(select * from WiseMis_AppIndexUserRights 
+				where AllowDelete='禁止' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_AppIndexUserRights 
+				where AllowDelete='允许' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as UserAllowDelete
+,(case when @LoginMode='SQL' then  (case when PERMISSIONS(object_id(BaseTable))&0x1000>0 then '允许' else '禁止' end) 
+		when @IsAdmin=1 then '允许'
+		else (case when exists(select * from WiseMis_AppIndexUserRights 
+				where AllowPrint='禁止' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_AppIndexUserRights 
+				where AllowPrint='允许' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as UserAllowPrint
+,(case when @LoginMode='SQL' then  (case when PERMISSIONS(object_id(BaseTable))&0x1000>0 then '允许' else '禁止' end) 
+		when @IsAdmin=1 then '允许'
+		else (case when exists(select * from WiseMis_AppIndexUserRights 
+				where AllowExport='禁止' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_AppIndexUserRights 
+				where AllowExport='允许' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as UserAllowExport
+,(case when @LoginMode='SQL' then '允许' 
+		when @IsAdmin=1 then '允许'
+		else (case when exists(select * from WiseMis_AppIndexUserRights 
+				where AllowAudit='禁止' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_AppIndexUserRights 
+				where AllowAudit='允许' 
+					and AppName=a.AppName 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as UserAllowAudit
+,a.__record__guid__
+,c.LastClickTime,isnull(c.Visible,1) as Visible,c.IconImageGuid as UserIconImageGuid,c.FormWidth,c.TaskFilter, c.FormWidth2, c.ShowDetail,c.PrintPreview1,c.PrintPreview2,c.FormHeight
+,c.HideTree,cast(0 as bit) as Changed 
+from WiseMis_AppIndex a left join WiseMis_AppSchame c on a.AppName=c.AppName and c.UserName=@TestUser
+order by AppType,AppOrder
+
+--Query
+select a.select_name, sql_str, AppType, orderid, a.IconImageGuid
+,isnull(c.favorite,0) as IsFavorite
+,IsRelease
+,DisVisible
+,Title
+,(case	when @LoginMode='SQL' then '允许' 
+		when @IsAdmin=1 then '允许'
+		else (case when exists(select * from WiseMis_QueryUserRights 
+				where AllowSelect='禁止' 
+					and SelectName=a.Select_Name 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_QueryUserRights 
+				where AllowSelect='允许' 
+					and SelectName=a.Select_Name 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as AllowSelect
+,LastClickTime, Visible, c.IconImageGuid as UserIconImageGuid
+,cast(0 as bit) as Changed
+from WiseMis_Query a 	left join WiseMis_QuerySchame c on a.Select_Name=c.Select_Name and c.UserName=@TestUser
+order by AppType,OrderId
+
+--Menu
+select a.id, name, Title, isLine, AppType, orderid, menuCode,a.IconImageGuid
+,isnull(c.favorite,0) as IsFavorite
+,IsRelease
+,DisVisible
+,(case	when @LoginMode='SQL' then '允许'
+		when @IsAdmin=1 then '允许' 
+		else (case when exists(select * from WiseMis_MenuUserRights 
+				where AllowRun='禁止' 
+					and MenuId=a.id 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) or 
+			not exists(select * from WiseMis_MenuUserRights 
+				where AllowRun='允许' 
+					and MenuId=a.id 
+					and dbo.WiseMis_IsMember(UserName,@TestUser,@TestDate)=1
+				) 
+			then '禁止' else '允许' end) end) as AllowRun
+,LastClickTime, Visible, c.IconImageGuid as UserIconImageGuid
+,cast(0 as bit) as Changed 
+from WiseMis_Menu a	left join WiseMis_MenuSchame c on a.id=c.id and c.UserName=@TestUser
+order by AppType,OrderId
+
+--Notify
+select NotifyName, Title, OrderID, QuerySql, Command, id, Visible, DisplayFields
+from WiseMis_UserNotify 
+where (UserId=@TestUser or UserId in (select RoleName from WiseMis_RoleUser where UserName=@TestUser) or UserId='public') 
+	and Visible=1 
+order by OrderId,id
+
+--中英文对照表
+select * from WiseMis_Language
+
+select * from WiseMis_WorkflowImage
+
+select * from WiseMis_Favorite_WorkflowImage where UserId=@TestUser
+ENDTEXT 
+
+*!*		*!*清空基础数据对象
+*!*		WITH _screen.oBaseData as Collection
+*!*			.Remove(-1)
+*!*		ENDWITH 
+*!*		*!*清空辅助资料对象
+*!*		WITH _screen.oItemData as Collection
+*!*			.Remove(-1)
+*!*		ENDWITH 
+*!*		*!*清空编码规则对象
+*!*		WITH _screen.oCodeRule as Collection
+*!*			.Remove(-1)
+*!*		ENDWITH 
+	
+	Local cAliasList
+	cAliasList=""
+	cAliasList = _screen.cAlias_AppType
+	cAliasList = cAliasList + "," + _screen.cAlias_AppIndex
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_AppDetail
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_AppFieldScript
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_AppRelation
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_AppWorkflow
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_AppReport
+	cAliasList = cAliasList + "," + _screen.cAlias_Query
+	cAliasList = cAliasList + "," + _screen.cAlias_Menu
+	cAliasList = cAliasList + "," + _screen.cAlias_Notify
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_ExcelImportIndex
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_ExcelImportDetail
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_SearchSchame
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_AppReport2
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_ItemData
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_BaseData
+*!*		cAliasList = cAliasList + "," + _screen.cAlias_CodeRule
+	cAliasList = cAliasList + "," + _screen.cAlias_Language
+	cAliasList = cAliasList + "," + _screen.calias_workflowimage
+	cAliasList = cAliasList + "," + _screen.calias_favoriteimage
+
+	=CloseAlias(cAliasList)
+*!*		LOCAL cSQLCmd,cAddonSQL
+*!*		cSQLCmd="exec WiseMis_RefreshSystemInfo2"
+
+	IF !SelectData(cSQL,cAliasList)
+		RETURN .f.
+	ENDIF
+
+	*!*索引
+	SELECT (_screen.cAlias_AppIndex)
+	INDEX ON AppOrder TAG AppOrder ASCENDING
+
+	SELECT (_screen.cALias_Query)
+	INDEX ON OrderId TAG QueryOrder ASCENDING
+
+	SELECT (_screen.cALias_Menu)
+	INDEX ON OrderId TAG MenuOrder ASCENDING
+
+	SELECT (_screen.cAlias_AppIndex)
+	INDEX ON LastClickTime TAG Schame DESCENDING
+
+	SELECT (_screen.cAlias_Query)
+	INDEX ON LastClickTime TAG Schame DESCENDING
+
+	SELECT (_screen.cAlias_Menu)
+	INDEX ON LastClickTime TAG Schame DESCENDING 
+	
+
+	RETURN .t.
+ENDPROC

@@ -1,0 +1,1 @@
+<ScriptFile>SQL.sql</ScriptFile><FinishScriptFile></FinishScriptFile><DataFiles>WiseMis_Functions,WiseMis_AppIndex,WiseMis_AppDetail</DataFiles><EnableTrigger>,WiseMis_AppIndex,</EnableTrigger>

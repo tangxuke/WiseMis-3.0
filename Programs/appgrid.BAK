@@ -1,0 +1,568 @@
+DEFINE CLASS AppGridColumn as Column
+	cTempF7Name=""
+	*!*字段对象
+	oFieldObject=null
+	*!*脚本引擎
+	oScriptEngine=null
+	*!*字段控件
+	oFieldControl=null
+	*!*核心控件
+	oCoreControl=null
+	*!*标题控件
+	oHeader=null
+	*!*排序方式
+	nOrderType=0		&& 2表示降序,其他表示升序
+	*!*对象值
+	vObjectValue=null
+	*!*用户改变大小模式
+	bUserResize=.f.
+	*!*表格容器
+	oParentGridContainer=null
+	*!*兼容旧版本
+	cFieldType=""
+
+	_memberdata = FILETOSTR("AppGrid.xml")
+	PROCEDURE vObjectValue_Access
+		RETURN this.GetValue()
+	ENDPROC
+	
+	PROCEDURE OnLayoutChange
+		LPARAMETERS bNoReset as Boolean
+	ENDPROC 
+	
+	PROCEDURE cFieldType_Access
+		WITH this.oFieldObject as AppFieldObject
+			IF VARTYPE(.oUserRightObject)="O"
+				WITH .oUserRightObject as AppUserRightObject
+					RETURN .cFieldType
+				ENDWITH 
+			ELSE
+				RETURN .cFieldDataType
+			ENDIF 
+		ENDWITH 
+	ENDPROC 
+	
+	*!*设置标题
+	PROCEDURE SetTitle
+		LPARAMETERS cTitleText
+	ENDPROC 
+
+	*!*执行初始化
+	PROCEDURE DoInit
+		this.ForeColor= RGB(0,0,128)
+		
+		LOCAL oFieldObject as AppFieldObject
+		oFieldObject=this.oFieldObject
+		
+		IF oFieldObject.nFieldWidth>0
+			this.Width=oFieldObject.nFieldWidth
+		ENDIF
+		
+		LOCAL cF1
+		cF1=oFieldObject.F1
+		*this.ControlSource=oFieldObject.F1
+		
+		*!*添加标题控件
+		LOCAL oHeader as Header
+		oHeader=EVALUATE("this.Header1")
+		this.oHeader=oHeader
+		this.SetHeader()
+		*!*添加主控件
+		this.SetControl(oFieldObject.nFieldControlType)
+		*!*设置脚本引擎
+		this.SetScriptEngine(this.oScriptEngine)
+		*!*绑定事件
+		this.BindEvents()
+		*!*设置只读属性
+		this.ReadOnly=oFieldObject.bIsReadonly
+		this.SetAll("Readonly",oFieldObject.bIsReadonly)
+		*!*输入掩码和格式
+		IF !EMPTY(oFieldObject.cInputMask)
+			this.InputMask=oFieldObject.cInputMask
+		ELSE
+			IF INLIST(LOWER(oFieldObject.cFieldDataType),"n","numeric")
+				this.InputMask=REPLICATE("9",oFieldObject.nFieldPrec-oFieldObject.nFieldScale-1)+"."+REPLICATE("9",oFieldObject.nFieldScale)
+			ENDIF 
+		ENDIF 
+		IF !EMPTY(oFieldObject.cFormat)
+			this.Format="R"
+		ENDIF 
+		*!*动态显示
+		IF !EMPTY(NVL(oFieldObject.cDynamicBackColor,""))
+			this.DynamicBackColor=oFieldObject.cDynamicBackColor
+		ENDIF 
+		IF !EMPTY(NVL(oFieldObject.cDynamicForeColor,""))
+			this.DynamicForeColor=oFieldObject.cDynamicForeColor
+		ENDIF 
+		IF !EMPTY(NVL(oFieldObject.cDynamicFontBold,""))
+			this.DynamicFontBold=oFieldObject.cDynamicFontBold
+		ENDIF 
+		IF !EMPTY(NVL(oFieldObject.cDynamicFontItalic,""))
+			this.DynamicFontItalic=oFieldObject.cDynamicFontItalic
+		ENDIF 
+		IF !EMPTY(NVL(oFieldObject.cDynamicFontStrikeThru,""))
+			this.DynamicFontStrikeThru=oFieldObject.cDynamicFontStrikeThru
+		ENDIF 
+		IF !EMPTY(NVL(oFieldObject.cDynamicFontUnderline,""))
+			this.DynamicFontUnderline=oFieldObject.cDynamicFontUnderline
+		ENDIF 
+		 
+		*!*初始化值
+		*this.SetValue(oFieldObject.vDefaultValue)
+		IF VARTYPE(this.oCoreControl)="O"
+			WITH this.oCoreControl as AppGridFieldControl_TextBox
+				.OnResize()
+			ENDWITH 
+		ENDIF 
+	ENDPROC
+
+	*!*设置标题
+	PROCEDURE SetHeader
+		LOCAL oHeader as Header
+		oHeader=this.Header1
+		oHeader.Alignment= 2
+		oHeader.FontName="微软雅黑"
+		oHeader.FontCharSet= 134
+		oHeader.FontSize=10
+		oHeader.BackColor= RGB(199,237,204)
+		
+		oHeader.FontBold= .T.
+		IF VARTYPE(this.oFieldObject)="O"
+			WITH this.oFieldObject as AppFieldObject
+				oHeader.Caption=.cFieldCaption_NoChange
+				IF (!.bIsInsert AND !.bIsUpdate) OR .bIsReadonly
+					oHeader.ForeColor= RGB(64,128,128)
+					this.SetAll("TabStop",.f.)
+					this.Enabled= .f.
+				ENDIF
+				IF .nOrderType=0
+					oHeader.Picture=""
+				ENDIF 
+				IF .bF7Enabled
+					oHeader.Picture="select.bmp"
+				ENDIF 
+				*!*树形显示
+				IF .bIsTreeField
+					oHeader.Picture="treenode.bmp"
+				ENDIF 
+				*!*排序显示
+				IF .nOrderType=1
+					oHeader.Picture="up.bmp"
+				ENDIF 
+				IF .nOrderType=2
+					oHeader.Picture="down.bmp"
+				ENDIF 
+			ENDWITH
+		ENDIF 
+		WITH this.Parent as Grid
+			IF !.AllowCellSelection
+				oHeader.ForeColor=RGB(0,0,0)
+				this.Enabled= .T.
+			ENDIF 
+		ENDWITH 
+	ENDPROC
+
+	*!*设置控件
+	PROCEDURE SetControl
+		LPARAMETERS nControlType
+		IF VARTYPE(nControlType)<>"N"
+			IF VARTYPE(this.oFieldObject)="O"
+				WITH this.oFieldObject as AppFieldObject
+					nControlType=.nFieldControlType
+				ENDWITH
+			ENDIF 
+		ENDIF
+		LOCAL cFieldControlClass
+
+		DO CASE
+			CASE INLIST(nControlType,3)
+				cFieldControlClass="AppGridFieldControl_Checkbox"
+			CASE INLIST(nControlType,5,9,11)
+				cFieldControlClass="AppGridFieldControl_Combobox"
+				IF this.Width<80
+					this.Width=80
+				ENDIF 
+			CASE INLIST(nControlType,12)
+				cFieldControlClass="AppGridFieldControl_UrlTextbox"
+			OTHERWISE
+				cFieldControlClass="AppGridFieldControl_Textbox"
+		ENDCASE
+		IF TYPE("this.oMainControl")="O"
+			this.RemoveObject("oMainControl")
+		ENDIF
+
+		this.AddObject("oMainControl",cFieldControlClass)
+		this.oCoreControl=EVALUATE("this.oMainControl")
+		WITH this.oCoreControl as AppGridFieldControl_Textbox
+			.oFieldObject=this.oFieldObject
+			.DoInit()
+			.Visible= .T.
+		ENDWITH
+		*!*设置输入掩码和显示格式
+		WITH this.oFieldObject as AppFieldObject
+			LOCAL cInputMask,cFormat
+			cInputMask=.cInputMask
+			cFormat=.cFormat
+			WITH this.oCoreControl as AppGridFieldControl_Textbox
+				IF !EMPTY(cInputMask)
+					.InputMask=cInputMask
+				ENDIF 
+				IF !EMPTY(cFormat)
+					.Format=cFormat
+				ENDIF 
+			ENDWITH 
+		ENDWITH 
+		this.CurrentControl="oMainControl"
+	ENDPROC
+
+	*!*设置脚本引擎
+	PROCEDURE SetScriptEngine
+		LPARAMETERS oScriptEngine as AppScriptEngine
+		IF VARTYPE(oScriptEngine)<>"O"
+			RETURN
+		ENDIF
+
+		oScriptEngine.AddFieldControl(this)
+	ENDPROC
+
+	*!*赋值
+	PROCEDURE SetValue
+		LPARAMETERS vNewValue
+
+		LOCAL cPreCursor
+		cPreCursor=ALIAS()
+		WITH this.oFieldObject as AppFieldObject
+			WITH .oAppObject as AppObject
+				SELECT (.cDataCursor)
+			ENDWITH
+			
+			LOCAL vOldValue,cF2
+			cF2=.F2
+			vOldValue=EVALUATE(.F1)
+			REPLACE (.F1) WITH m.vNewValue,(.F2) WITH .t.,__edit__ with .t.
+*!*				IF .bIsUpdate AND .bUpdateRight AND TRANSFORM(EVALUATE(.F1))<>TRANSFORM(vOldValue)
+*!*					REPLACE __edit__ WITH .t.,&cF2 WITH .t.
+*!*				ENDIF
+		ENDWITH
+		IF SELECT(cPreCursor)>0
+			SELECT (cPreCursor)
+		ENDIF
+		this.Refresh
+	ENDPROC
+
+	*!*取值
+	PROCEDURE GetValue
+		LOCAL cPreCursor
+		cPreCursor=ALIAS()
+		LOCAL vFieldValue
+		WITH this.oFieldObject as AppFieldObject
+			WITH .oAppObject as AppObject
+				SELECT (.cDataCursor)
+			ENDWITH
+			m.vFieldValue=EVALUATE(.F1)
+		ENDWITH
+		IF VARTYPE(m.vFieldValue)="C"
+			m.vFieldValue=ALLTRIM(m.vFieldValue)
+		ENDIF
+		IF SELECT(cPreCursor)>0
+			SELECT (cPreCursor)
+		ENDIF
+		RETURN m.vFieldValue
+	ENDPROC
+
+
+	*!*绑定脚本事件
+	PROCEDURE BindEvents
+		TRY
+			*!*绑定获得焦点前事件
+			=BINDEVENT(this.oCoreControl,"When",this,"OnWhen")
+			*!*绑定获得焦点事件
+			=BINDEVENT(this.oCoreControl,"GotFocus",this,"OnGotFocus")
+			*!*绑定失去焦点前事件
+			=BINDEVENT(this.oCoreControl,"Valid",this,"OnValid")
+			*!*绑定失去焦点事件
+			=BINDEVENT(this.oCoreControl,"LostFocus",this,"OnLostFocus",4)
+			*!*绑定单击事件
+			=BINDEVENT(this.oCoreControl,"Click",this,"OnClick")
+			*!*绑定双击事件
+			=BINDEVENT(this.oCoreControl,"DblClick",this,"OnDblClick")
+			*!*绑定右击事件
+			=BINDEVENT(this.oCoreControl,"RightClick",this,"OnRightClick")
+			*!*绑定值变化事件
+			=BINDEVENT(this.oCoreControl,"InteractiveChange",this,"OnInteractiveChange")
+			=BINDEVENT(this.oCoreControl,"ProgrammaticChange",this,"OnProgrammaticChange")
+			*!*绑定按键事件
+			=BINDEVENT(this.oCoreControl,"KeyPress",this,"OnKeyPress")
+			*!*绑定标题栏事件
+			=BINDEVENT(this.oHeader,"RightClick",this,"OnHeaderRightClick")
+			=BINDEVENT(this.oHeader,"Click",this,"OnHeaderClick")
+		CATCH
+		ENDTRY
+	ENDPROC
+
+	*!*执行脚本
+	PROCEDURE ExecuteScript
+		LPARAMETERS cScriptType as String,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+
+		LOCAL cMethodBody
+		WITH this.oFieldObject as AppFieldObject
+			WITH .oScriptCollection as Collection
+				cMethodBody=.Item(cScriptType)
+			ENDWITH 
+		ENDWITH
+
+		IF EMPTY(cMethodBody)
+			RETURN .t.
+		ENDIF
+
+		LOCAL oMethod as AppMethodObject
+		oMethod=CREATEOBJECT("AppMethodObject")
+		oMethod.oScriptEngine=this.oScriptEngine
+		oMethod.cMethodBody=cMethodBody
+		RETURN oMethod.Execute(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnWhen
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		WITH this.oFieldObject as AppFieldObject
+			LOCAL cCursorType
+			cCursorType=.cCursorFieldType
+			WITH .oAppObject as AppObject
+				SELECT (.cDataCursor)
+			ENDWITH 
+			REPLACE (.F1) WITH CAST(EVALUATE(.F1) as &cCursorType)
+		ENDWITH 
+		RETURN this.ExecuteScript("B",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnGotFocus
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		
+		this.CurrentControl="oMainControl"
+
+*!*			IF ISNULL(this.GetValue())
+*!*				WITH this.oFieldObject as AppFieldObject
+*!*					this.SetValue(.vDefaultValue)
+*!*					REPLACE __edit__ with .t.
+*!*				ENDWITH
+*!*			ENDIF
+		
+		RETURN this.ExecuteScript("C",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnValid
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		RETURN this.ExecuteScript("D",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnClick
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		RETURN this.ExecuteScript("F",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnDblClick
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		RETURN this.ExecuteScript("G",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnRightClick
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		RETURN this.ExecuteScript("H",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnProgrammaticChange
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		WITH this.oFieldObject as AppFieldObject
+			WITH .oAppObject as AppObject
+				SELECT (.cDataCursor)
+			ENDWITH
+			WITH this.oFieldObject as AppFieldObject
+				.vObjectValue=EVALUATE(.F1)
+			ENDWITH 
+			IF .bIsUpdate AND .bUpdateRight
+				REPLACE __edit__ WITH .t.
+			ENDIF
+		ENDWITH
+
+		*RETURN this.ExecuteScript("I",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnInteractiveChange
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		WITH this.oFieldobject as AppFieldObject
+			WITH .oAppObject as AppObject
+				SELECT (.cDataCursor)
+			ENDWITH
+			.vObjectValue=EVALUATE(.F1)
+			REPLACE __edit__ with .t.
+		ENDWITH
+		
+		RETURN this.ExecuteScript("I",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	PROCEDURE OnKeyPress
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		WITH this.oFieldobject as AppFieldObject
+			IF p1=-2
+				WITH .oAppObject as AppObject
+					SELECT (.cDataCursor)
+				ENDWITH
+				REPLACE __delete__ with .t.
+			ENDIF
+		ENDWITH
+		RETURN this.ExecuteScript("L",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+
+	*!*此方法为兼容旧版脚本
+	PROCEDURE Bind_Combox
+		LPARAMETERS bBind as Boolean
+		IF VARTYPE(bBind)<>"L"
+			bBind=.f.
+		ENDIF
+		IF !bBind
+			RETURN
+		ENDIF
+
+		WITH this.oFieldObject as AppFieldObject
+			IF .bF7Enabled
+				LOCAL cTempCursor,cListData
+				cListData=""
+				cTempCursor=SYS(2015)
+				SELECT 0
+				LOCAL cF7SelectSQL
+				LOCAL oAppObject as AppObject
+				oAppObject=.oAppObject
+				cF7SelectSQL=oAppObject.TransformSQLText(.cF7SelectSQL)
+				IF SelectData(cF7SelectSQL,cTempCursor)
+					SELECT (cTempCursor)
+					SCAN
+						cListData = cListData + IIF(EMPTY(cListData),"",",") + EVALUATE(.cF7ReturnField)
+					ENDSCAN
+					=CloseAlias(cTempCursor)
+				ENDIF
+				.cListData=cListData
+			ENDIF
+		ENDWITH
+		WITH this.oCoreControl as AppCoreFieldControl
+			.DoInit()
+		ENDWITH
+	ENDPROC
+
+	*!*标题栏右键事件
+	PROCEDURE OnHeaderRightClick
+		RETURN 
+		
+		LOCAL nOrderType
+		nOrderType=this.nOrderType
+		WITH this.Parent as Grid
+			.SetAll("nOrderType",0)
+		ENDWITH
+		WITH this.oFieldObject as AppFieldObject
+			LOCAL oUserRight as AppUserRightObject
+			oUserRight=.oUserRightObject
+			IF VARTYPE(oUserRight)="O"
+				IF oUserRight.bIsMemoField
+					RETURN
+				ENDIF
+			ENDIF
+
+			WITH .oAppObject as AppObject
+				SELECT (.cDataCursor)
+			ENDWITH
+			DO CASE
+				CASE nOrderType=2
+					SET ORDER TO (.cTagName) ASCENDING
+					this.nOrderType=1
+				OTHERWISE
+					SET ORDER TO (.cTagName) DESCENDING
+					this.nOrderType=2
+			ENDCASE
+		ENDWITH
+		WITH this.Parent as Grid
+			GOTO TOP
+			.Refresh
+		ENDWITH
+	ENDPROC
+
+	*!*标题栏单击事件
+	PROCEDURE OnHeaderClick
+		
+		If !Used()
+			Return
+		ENDIF
+		
+		WITH this.oFieldObject as AppFieldObject
+			SET DECIMALS TO .nFieldScale
+		ENDWITH 
+		LOCAL nRecNo
+		Select (Alias())
+		nRecNo=RECNO()
+		
+		Local cField
+		cField = This.ControlSource
+		If Inlist(Type(cField),"M","G","W")
+			Return
+		Endif
+		Local nCount , vMax , vMin , nAvg , nSum
+		nAvg = null
+		nSum = null
+		Calculate To nCount Cnt ( )
+		Calculate To vMax Max ( Evaluate(cField) ) 
+		Calculate To vMin Min ( Evaluate(cField) )
+		If Type(cField) = "N"
+			Calculate To nAvg Avg ( Evaluate(cField) )
+			Calculate To nSum Sum ( Evaluate(cField) )
+			nAvg = Transform(nAvg)
+			nSum = Transform(nSum)
+			vMax = Transform(vMax)
+			vMin = Transform(vMin)
+		Endif
+		=SetStatusText(ToEnglish("合计：") + Alltrim(Transform(nSum)) + ToEnglish("，最大值：") + Alltrim(Transform(vMax)) +  ;
+			ToEnglish("，最小值：") +  ;
+			ALLTRIM(Transform(vMin)) +  ;
+			ToEnglish("，平均值：") +  ;
+			ALLTRIM(Transform(nAvg)) +  ;
+			ToEnglish("，次数：") +  ;
+			ALLTRIM(Transform(nCount)))
+			
+		GOTO nRecNo
+			
+		SET DECIMALS TO 
+	ENDPROC
+
+	*!*更改列宽度时
+	PROCEDURE Resize
+		MESSAGEBOX("resize")
+		WITH this.oFieldObject as AppFieldObject
+			IF .nFieldWidth<>this.Width AND this.bUserResize
+				.bUserSchameChanged=.t.
+				.nFieldWidth=this.Width
+			ENDIF
+		ENDWITH
+		WITH this.oCoreControl as AppGridFieldControl_Textbox
+			.OnResize()
+		ENDWITH 
+	ENDPROC
+
+	*!*移动列时
+	PROCEDURE Moved
+		WITH this.oFieldObject as AppFieldObject
+			WITH .oAppObject as AppObject
+				FOR EACH oFieldObject as AppFieldObject IN .oFieldObjectsShowInGrid
+					LOCAL oFieldColumn as Column
+					oFieldColumn=EVALUATE("this.Parent.__"+oFieldObject.cFieldName+"__")
+					oFieldObject.nGridOrderId=oFieldColumn.ColumnOrder
+					oFieldObject.bUserSchameChanged=.t.
+				ENDFOR
+			ENDWITH
+		ENDWITH
+		DODEFAULT()
+	ENDPROC
+
+	*!*失去焦点时
+	PROCEDURE OnLostFocus
+		LPARAMETERS p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20
+		
+		RETURN this.ExecuteScript("E",p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20)
+	ENDPROC
+ENDDEFINE

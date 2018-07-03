@@ -1,0 +1,48 @@
+Form x:\源代码\公共平台\wisemis3.0\addons\frm_流水单.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown RESETGRID - Undefined
+    Unknown GETNEWID - Undefined
+    Unknown CREATEAPPOBJECT - Undefined
+    Unknown INPUTPASSWORD - Undefined
+    File CLEANUP.BMP - Undefined
+    File INSERT.BMP - Undefined
+    File CHECK.BMP - Undefined
+
+Visual Class Library x:\源代码\公共平台\wisemis3.0\addons\addons.vcx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+
+Visual Class Library x:\源代码\公共平台\wisemis3.0\addons\wisemisobject.vcx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown CREATEAPPOBJECT - Undefined
+    Unknown DOWISEMISAPPLICATION - Undefined
+    Unknown IMAGETOFILE - Undefined
+    Unknown RUNFILE - Undefined
+    Unknown SETSTATUSTEXT - Undefined
+    Unknown BUY - Undefined
+    Unknown SETMAINPROCESSBAR - Undefined
+
+Visual Class Library x:\源代码\公共平台\wisemis3.0\addons\_base.vcx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown CREATEAPPOBJECT - Undefined
+    Unknown DOWISEMISAPPLICATION - Undefined
+    Unknown IMAGETOFILE - Undefined
+    Unknown RUNFILE - Undefined
+    Unknown SETSTATUSTEXT - Undefined
+    Unknown TOTIMESTRING - Undefined
+
+Program x:\源代码\公共平台\wisemis3.0\addons\myheader.prg has the following errors:
+    Unknown SETSTATUSTEXT - Undefined
+
+Form x:\源代码\公共平台\wisemis3.0\addons\frm_browse.scx has the following errors:
+    Unknown SETSTATUSTEXT - Undefined
+
+Form x:\源代码\公共平台\wisemis3.0\addons\frm_sms_send.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown CLOSEALIAS - Undefined
+    Unknown CREATEAPPOBJECT - Undefined
+    Unknown SENDSMS - Undefined
+

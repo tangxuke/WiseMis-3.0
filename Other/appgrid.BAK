@@ -1,0 +1,26 @@
+<VFPData>
+	<memberdata name="ofieldobject" type="property" display="oFieldObject"/>
+	<memberdata name="ofieldcontrol" type="property" display="oFieldControl"/>
+	<memberdata name="oscriptengine" type="property" display="oScriptEngine"/>
+	<memberdata name="ocorecontrol" type="property" display="oCoreControl"/>
+	<memberdata name="oheader" type="property" display="oHeader"/>
+	<memberdata name="nordertype" type="property" display="nOrderType"/>
+	<memberdata name="vobjectvalue" type="property" display="vObjectValue"/>
+	<memberdata name="doinit" type="method" display="DoInit"/>
+	<memberdata name="setcontrol" type="method" display="SetControl"/>
+	<memberdata name="setscriptengine" type="method" display="SetScriptEngine"/>
+	<memberdata name="setvalue" type="method" display="SetValue"/>
+	<memberdata name="getvalue" type="method" display="GetValue"/>
+	<memberdata name="setheader" type="method" display="SetHeader"/>
+	<memberdata name="bindevents" type="method" display="BindEvents"/>
+	<memberdata name="onwhen" type="method" display="OnWhen"/>
+	<memberdata name="ongotfocus" type="method" display="OnGotFocus"/>
+	<memberdata name="onvalid" type="method" display="OnValid"/>
+	<memberdata name="onlostfocus" type="method" display="OnLostFocus"/>
+	<memberdata name="onclick" type="method" display="OnClick"/>
+	<memberdata name="ondblclick" type="method" display="OnDblClick"/>
+	<memberdata name="onrightclick" type="method" display="OnRightClick"/>
+	<memberdata name="oninteractivechange" type="method" display="OnInteractiveChange"/>
+	<memberdata name="onkeypress" type="method" display="OnKeyPress"/>
+	<memberdata name="vobjectvalue_access" type="method" display="vObjectValue_Access"/>
+</VFPData>
