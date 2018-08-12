@@ -1,37 +1,68 @@
-Form x:\源代码\公共平台\wisemis3.0\addons\多维点餐系统\点餐.scx has the following errors:
+Form e:\yunpan\源代码\公共平台\wisemis3.0\addons\多维点餐系统\点餐.scx has the following errors:
     Unknown SELECTDATA - Undefined
     Unknown CLOSEALIAS - Undefined
     Unknown EXECUTE - Undefined
     Unknown INPUTBOX1 - Undefined
 
-Form x:\源代码\公共平台\wisemis3.0\forms\frm_f7.scx has the following errors:
+Form e:\yunpan\源代码\公共平台\wisemis3.0\forms\frm_f7.scx has the following errors:
     Unknown SELECTDATA - Undefined
     Unknown CLOSEALIAS - Undefined
+    Unknown MESSAGEBOX1 - Undefined
+    Unknown TRANSFORMOBJECTS - Undefined
 
-Visual Class Library x:\源代码\公共平台\wisemis3.0\classlibs\_base.vcx has the following errors:
+Visual Class Library e:\yunpan\源代码\公共平台\wisemis3.0\classlibs\_base.vcx has the following errors:
     Unknown SELECTDATA - Undefined
     Unknown CLOSEALIAS - Undefined
     Unknown EXECUTE - Undefined
     Unknown INPUTBOX1 - Undefined
+    Unknown MESSAGEBOX1 - Undefined
+    Unknown TRANSFORMOBJECTS - Undefined
     Unknown SETSTATUSTEXT - Undefined
     Unknown SHELLEXECUTE - Undefined
     Unknown CREATEAPPOBJECT - Undefined
     Unknown DOWISEMISAPPLICATION - Undefined
     Unknown MD5STRING - Undefined
+    Unknown TOENGLISH - Undefined
     Unknown TOTIMESTRING - Undefined
     Unknown IMAGETOFILE - Undefined
     Unknown RUNFILE - Undefined
     Unknown UNREGISTERFORM - Undefined
     Unknown REGISTERFORM - Undefined
 
-Program x:\源代码\公共平台\wisemis3.0\classlibs\myheader.prg has the following errors:
+Program e:\yunpan\源代码\公共平台\wisemis3.0\classlibs\myheader.prg has the following errors:
     Unknown SETSTATUSTEXT - Undefined
+    Unknown TOENGLISH - Undefined
 
-Form x:\源代码\公共平台\wisemis3.0\forms\frm_browse.scx has the following errors:
+Form e:\yunpan\源代码\公共平台\wisemis3.0\forms\frm_text.scx has the following errors:
+    Unknown TRANSFORMOBJECTS - Undefined
+    Unknown TOENGLISH - Undefined
+
+Form e:\yunpan\源代码\公共平台\wisemis3.0\forms\frm_get_data.scx has the following errors:
+    Unknown MESSAGEBOX1 - Undefined
+    Unknown TRANSFORMOBJECTS - Undefined
+
+Form e:\yunpan\源代码\公共平台\wisemis3.0\forms\frm_browse.scx has the following errors:
+    Unknown MESSAGEBOX1 - Undefined
+    Unknown TRANSFORMOBJECTS - Undefined
     Unknown SETSTATUSTEXT - Undefined
+    Unknown TOENGLISH - Undefined
     Unknown VALIDREGISTER - Undefined
 
-Form x:\源代码\公共平台\wisemis3.0\forms\frm_tool_export.scx has the following errors:
+Form e:\yunpan\源代码\公共平台\wisemis3.0\forms\frm_tool_password.scx has the following errors:
+    Unknown TRANSFORMOBJECTS - Undefined
+
+Form e:\yunpan\源代码\公共平台\wisemis3.0\forms\frm_tool_export.scx has the following errors:
     Unknown INPUTBOX1 - Undefined
+    Unknown MESSAGEBOX1 - Undefined
+    Unknown TRANSFORMOBJECTS - Undefined
+    Unknown TOENGLISH - Undefined
+    Unknown VALIDREGISTER - Undefined
+
+Form e:\yunpan\源代码\公共平台\wisemis3.0\forms\frm_browse2.scx has the following errors:
+    Unknown SELECTDATA - Undefined
+    Unknown MESSAGEBOX1 - Undefined
+    Unknown TRANSFORMOBJECTS - Undefined
+    Unknown TOENGLISH - Undefined
+    Unknown RUNFILE - Undefined
     Unknown VALIDREGISTER - Undefined
 
